@@ -70,7 +70,7 @@ motor_mount_hole_size=(
 
 wheelbase = (
   stack_board_size / sin(45) + 
-  STACK_CLEARANCE + 
+  STACK_CLEARANCE * 2 + 
   prop_size
 );
 
