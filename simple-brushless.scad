@@ -1,50 +1,22 @@
-$fn=64;
 
-/* [Basic Config] */
-
-// Motor size
-MOTOR_SIZE = 11; // [11]
+MOTOR_SIZE = 11; // [11:11xx, 18:18xx, 22:22xx, 23:23xx]
 
 // Stack Hole Spacing
-STACK_HOLE_SPACING = 20; // [16, 20, 30.5]
+STACK_HOLE_SPACING = 20; // [30.5:30.5x30.5, 20:20x20, 16:16x16] 
 
 // Prop clearance from the stack
 STACK_CLEARANCE = 1;
 
-/* [Frame] */
+// What is the prop size in inches?
+PROP_SIZE_INCHES=2;
 
 // How thick do you want the frame to be?
 FRAME_THICKNESS=3;
 
 // How thick do you need the prop guard rails to be
-GUARD_WIDTH=2;
-
-/* Props */
-
-// What is the prop size in inches?
-PROP_SIZE_INCHES=2;
+GUARD_WIDTH=3;
 
 /* [Advanced Options] */
-
- // Size of the board (calculated from the hole spacing)
-STACK_BOARDSIZE = (
-  STACK_HOLE_SPACING == 16 ? 20 :
-  STACK_HOLE_SPACING == 20 ? 25 :
-  36
-);
-
-// The diagonal distance between motor holes
-MOTOR_MOUNT_DIAMETER=(
-   MOTOR_SIZE == 11 ? 9 :
-   MOTOR_SIZE == 18 ? 12 :
-   MOTOR_SIZE == 22 ? 16 : 
-   MOTOR_SIZE == 23 ? 16 : 0
- );
-
-// The diameter of the moter holes (m2 by default)
-MOTOR_MOUNT_HOLESIZE=(
-  MOTOR_SIZE <= 18 ? 2 : 3
-);
 
 // Distance from the edge of the arm and the motor holes
 MOTOR_MOUNT_MARGIN=5;
@@ -52,30 +24,72 @@ MOTOR_MOUNT_MARGIN=5;
 // Diameter of the center hole in the frame
 MOTOR_MOUNT_CENTER_DIAMETER=5;
 
-// Hole diameter
-STACK_HOLE_DIAMETER=(
-  STACK_HOLE_SPACING < 20 ? 2 : 3
-);
-
 // Margin for the outside standoffs
 STANDOFF_MARGIN=5;
 
 /* [Hidden] */
-PROP_SIZE = PROP_SIZE_INCHES * 25.4; 
+$fn=64;
+
+prop_size = PROP_SIZE_INCHES * 25.4; 
+
+// Size of the board (calculated from the hole spacing)
+stack_board_size = (
+  STACK_HOLE_SPACING == 16 ? 20 :
+  STACK_HOLE_SPACING == 20 ? 25 :
+  STACK_HOLE_SPACING == 30.5 ? 36 : 
+  0
+);
+
+stack_hole_spacing = (
+  STACK_HOLE_SPACING != 0 ? STACK_HOLE_SPACING :
+  0
+);
+
+stack_hole_diameter=(
+  STACK_HOLE_SPACING >= 20 ? 3 :
+  STACK_HOLE_SPACING >= 16 ? 2 :
+  0
+);
+
+
+// The diagonal distance between motor holes
+motor_mount_diaganal=(
+   MOTOR_SIZE == 11 ? 9 :
+   MOTOR_SIZE == 18 ? 12 :
+   MOTOR_SIZE == 22 ? 16 : 
+   MOTOR_SIZE == 23 ? 16 : 
+   0
+ );
+
+// The diameter of the moter holes
+motor_mount_hole_size=(
+  MOTOR_SIZE >= 22 ? 3 :
+  MOTOR_SIZE >= 11 ? 2 :
+  0
+);
 
 wheelbase = (
-  STACK_BOARDSIZE + STACK_CLEARANCE + PROP_SIZE
+  stack_board_size / sin(45) + 
+  STACK_CLEARANCE + 
+  prop_size
 );
+
 side = (
   (sin(45) * wheelbase) // distance between motors horizontally
-  + PROP_SIZE // clearance for props (both motors horizontally)
+  + prop_size// clearance for props (both motors horizontally)
   + GUARD_WIDTH * 2 // size of both sides of the guard
 );
-motorHoleDistance = sin(45) * MOTOR_MOUNT_DIAMETER;
+motorHoleDistance = sin(45) * motor_mount_diaganal;
+
+echo("Wheelbase: ");
+echo(wheelbase);
+echo("Total Width: ");
+echo(side);
+
 
 // modules
 module motorHoles() {
-  center_offset = MOTOR_MOUNT_HOLESIZE - motorHoleDistance;
+  center_offset = motor_mount_hole_size - motorHoleDistance;
   // center the module
   translate([0,center_offset,FRAME_THICKNESS*-1 / 2 ]) {
     rotate([0,0,45]) {
@@ -84,16 +98,16 @@ module motorHoles() {
           cylinder(r=MOTOR_MOUNT_CENTER_DIAMETER/2, h=FRAME_THICKNESS*2);
         }
         translate([0,0,-FRAME_THICKNESS/2]) {
-          cylinder(r=MOTOR_MOUNT_HOLESIZE/2, h=FRAME_THICKNESS*2);
+          cylinder(r=motor_mount_hole_size/2, h=FRAME_THICKNESS*2);
         }
         translate([0,motorHoleDistance,-FRAME_THICKNESS/2]) {
-          cylinder(r=MOTOR_MOUNT_HOLESIZE/2, h=FRAME_THICKNESS*2);
+          cylinder(r=motor_mount_hole_size/2, h=FRAME_THICKNESS*2);
         }
         translate([motorHoleDistance,0,-FRAME_THICKNESS/2]) {
-          cylinder(r=MOTOR_MOUNT_HOLESIZE/2, h=FRAME_THICKNESS*2);
+          cylinder(r=motor_mount_hole_size/2, h=FRAME_THICKNESS*2);
         }
         translate([motorHoleDistance,motorHoleDistance,-FRAME_THICKNESS/2]) {
-          cylinder(r=MOTOR_MOUNT_HOLESIZE/2, h=FRAME_THICKNESS*2);
+          cylinder(r=motor_mount_hole_size/2, h=FRAME_THICKNESS*2);
         }
       }
     }
@@ -128,7 +142,7 @@ module allMotorHoles() {
   distance = sin(45) * wheelbase;
   center = distance / 2;
   translate([-center, -center, 0]) {
-  translate([0, 0,0]) {
+  translate([0, 0, 0]) {
     motorHoles();
   }
   translate([distance, 0,0]) {
@@ -143,18 +157,18 @@ module allMotorHoles() {
 }
 }
 module stackHoles() {
-  translate([-STACK_HOLE_SPACING/2,-STACK_HOLE_SPACING/2,-FRAME_THICKNESS/2]) {
+  translate([-stack_hole_spacing/2,-stack_hole_spacing/2,-FRAME_THICKNESS/2]) {
     translate([0,0,0]) {
-      cylinder(r=STACK_HOLE_DIAMETER/2, h=FRAME_THICKNESS*2);
+      cylinder(r=stack_hole_diameter/2, h=FRAME_THICKNESS*2);
     }
-    translate([0,STACK_HOLE_SPACING,0]) {
-      cylinder(r=STACK_HOLE_DIAMETER/2, h=FRAME_THICKNESS*2);
+    translate([0,stack_hole_spacing,0]) {
+      cylinder(r=stack_hole_diameter/2, h=FRAME_THICKNESS*2);
     }
-    translate([STACK_HOLE_SPACING,0,0]) {
-      cylinder(r=STACK_HOLE_DIAMETER/2, h=FRAME_THICKNESS*2);
+    translate([stack_hole_spacing,0,0]) {
+      cylinder(r=stack_hole_diameter/2, h=FRAME_THICKNESS*2);
     }
-    translate([STACK_HOLE_SPACING,STACK_HOLE_SPACING,0]) {
-      cylinder(r=STACK_HOLE_DIAMETER/2, h=FRAME_THICKNESS*2);
+    translate([stack_hole_spacing,stack_hole_spacing,0]) {
+      cylinder(r=stack_hole_diameter/2, h=FRAME_THICKNESS*2);
     }
   }
 }
