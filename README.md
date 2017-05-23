@@ -6,3 +6,7 @@ A simple, easy to print brushless frame.
 2. Uses unmodified 2" props
 3. Can be modified using Customizer (change motor size, FC size, etc)
 4. Prop guards
+
+## Example build
+
+An example build can be found at [rotorbuilds.com](https://rotorbuilds.com/build/3916)
