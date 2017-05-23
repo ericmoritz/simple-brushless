@@ -1,5 +1,3 @@
-M3 = 3.2; 
-M2 = 2.2;
 
 MOTOR_SIZE = 11; // [11:11xx, 18:18xx, 22:22xx, 23:23xx]
 
@@ -30,7 +28,8 @@ MOTOR_MOUNT_CENTER_DIAMETER=5;
 STANDOFF_MARGIN=3;
 
 /* [Hidden] */
-//$fn=64;
+M3 = 3.2; 
+M2 = 2.2;
 
 prop_size = PROP_SIZE_INCHES * 25.4; 
 
@@ -134,7 +133,8 @@ module guard() {
 }
 
 module stackHoles() {
-  translate([stack_hole_spacing/2,0,-FRAME_THICKNESS]) {
+  offset = stack_hole_spacing / sin(45) / 2;
+  translate([offset,0,-FRAME_THICKNESS]) {
     cylinder(r=stack_hole_diameter/2, h=FRAME_THICKNESS*2);
   }
 }
