@@ -7,6 +7,8 @@ A simple, easy to print brushless frame.
 3. Can be modified using Customizer (change motor size, FC size, etc)
 4. Prop guards
 
+![render](./docs/scad.png)
+
 ## Example build
 
 An example build can be found at [rotorbuilds.com](https://rotorbuilds.com/build/3916)
