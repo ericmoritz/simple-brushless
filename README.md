@@ -7,7 +7,9 @@ A simple, easy to print brushless frame.
 3. Can be modified using Customizer (change motor size, FC size, etc)
 4. Prop guards
 
-![render](./docs/scad.png)
+# Images
+[Rendering](./scad.png)
+[Owl Mode](./owl-mode.jpg)
 
 ## Example build
 
