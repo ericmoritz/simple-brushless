@@ -9,8 +9,8 @@ A simple, easy to print brushless frame.
 
 # Images
 
-* [Rendering](./scad.png)
-* [Owl Mode](./owl-mode.jpg)
+* [Rendering](./docs/scad.png)
+* [Owl Mode](./docs/owl-mode.jpg)
 
 ## Example build
 
