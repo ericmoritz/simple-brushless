@@ -8,8 +8,9 @@ A simple, easy to print brushless frame.
 4. Prop guards
 
 # Images
-[Rendering](./scad.png)
-[Owl Mode](./owl-mode.jpg)
+
+* [Rendering](./scad.png)
+* [Owl Mode](./owl-mode.jpg)
 
 ## Example build
 
