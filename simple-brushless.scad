@@ -1,3 +1,4 @@
+part = "all"; // ["all", "frame", "aio_camera"]
 
 MOTOR_SIZE = 11; // [11:11xx, 18:18xx, 22:22xx, 23:23xx]
 
@@ -16,6 +17,15 @@ FRAME_THICKNESS=3;
 // How thick do you need the prop guard rails to be
 GUARD_WIDTH=2;
 
+/* [Camera Options] */
+aio_camera_height = 3;
+aio_lens_diameter = 8;
+aio_lens_margin = 3;
+aio_lens_gap = 3;
+aio_angle = 20;
+aio_to_lens = 10;
+aio_board_depth = 10;
+
 /* [Advanced Options] */
 
 // Distance from the edge of the arm and the motor holes
@@ -28,8 +38,8 @@ MOTOR_MOUNT_CENTER_DIAMETER=5;
 STANDOFF_MARGIN=3;
 
 /* [Hidden] */
-M3 = 3.2; 
-M2 = 2.2;
+M3 = 3.4; 
+M2 = 2.4;
 
 prop_size = PROP_SIZE_INCHES * 25.4; 
 
@@ -77,7 +87,7 @@ wheelbase = (
 
 motorHoleDistance = sin(45) * motor_mount_diaganal;
 
-guard_ir = prop_size / 2;
+guard_ir = prop_size / 2 + PROP_CLEARANCE;
 guard_or = guard_ir + GUARD_WIDTH;
 
 arm_length = (
@@ -171,18 +181,91 @@ module arm() {
     standoffHole();
   } 
 }
-arm();
-rotate([0,0,90]) {
+module frame() {
   arm();
+  rotate([0,0,90]) {
+    arm();
+  }
+  rotate([0,0,180]) {
+    arm();
+  }
+  rotate([0,0,-180]) {
+    arm();
+  }
+
+  rotate([0,0,-90]) {
+    arm();
+  }
 }
-rotate([0,0,180]) {
-  arm();
-}
-rotate([0,0,-180]) {
-  arm();
+module aio_camera() {
+  thickness = FRAME_THICKNESS/2;
+  
+  plate_size = [
+    stack_board_size,stack_board_size, thickness
+  ];
+  
+  holder_z = aio_to_lens+aio_lens_diameter+aio_lens_margin;
+  holder_offset = tan(aio_angle) * (holder_z / 2);
+  holder_size = [
+        aio_lens_diameter+aio_lens_margin*2, 
+        thickness,
+        holder_z
+  ];
+
+  overhang_size = [
+    holder_size[0],
+    aio_board_depth,
+    thickness,
+  ];
+  
+  rotate([0,0,0]) {
+    difference() {
+      union() {
+        // plate
+        translate([0,0,holder_size[2]/2-thickness/2]) {
+          cube(plate_size, center=true);
+        }
+        // overhang
+        translate([0,-(overhang_size[1]+stack_board_size)/2,holder_size[2]/2-thickness/2]) {
+          cube(overhang_size, center=true);
+        }
+        // holder
+        translate([0,-(holder_offset+stack_board_size+thickness+overhang_size[1]*2)/2,0]) {
+          rotate([-aio_angle,0,0]) {
+            difference() {
+            cube(holder_size, center=true);
+            translate([0,thickness*2,0]) {
+              rotate([90,0,0])
+                cylinder(r=aio_lens_diameter/2, h=thickness*4);
+              }
+              translate([0,0,-holder_size[2]/4]) {
+                cube([aio_lens_gap,thickness*4,holder_size[2]/2], center=true);
+              }
+            }
+          }
+        } 
+      }
+      // holes
+      translate([-stack_hole_spacing/2,-stack_hole_spacing/2,holder_size[2]/2-thickness*2]) {
+          cylinder(r=stack_hole_diameter/2, h=FRAME_THICKNESS*2);
+          translate([stack_hole_spacing,0,0]) {
+            cylinder(r=stack_hole_diameter/2, h=FRAME_THICKNESS*2);
+          }
+          translate([0, stack_hole_spacing,0]) {
+            cylinder(r=stack_hole_diameter/2, h=FRAME_THICKNESS*2);
+          }
+          translate([stack_hole_spacing, stack_hole_spacing,0]) {
+            cylinder(r=stack_hole_diameter/2, h=FRAME_THICKNESS*2);
+          }
+        }  
+      }
+    }
 }
 
-rotate([0,0,-90]) {
-  arm();
+if (part == "frame" || part == "all") {
+ frame();
+}
+if (part == "aio_camera" || part == "all") {
+  aio_camera();
 }
 $fn=64;
