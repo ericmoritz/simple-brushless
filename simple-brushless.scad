@@ -1,4 +1,4 @@
-part = "all"; // ["all", "frame", "aio_camera"]
+part = "all"; // ["all", "frame", "aio"]
 
 MOTOR_SIZE = 11; // [11:11xx, 18:18xx, 22:22xx, 23:23xx]
 
@@ -19,9 +19,9 @@ GUARD_WIDTH=2;
 
 /* [Camera Options] */
 aio_camera_height = 3;
-aio_lens_diameter = 8;
+aio_lens_diameter = 8.2;
 aio_lens_margin = 3;
-aio_lens_gap = 3;
+aio_lens_gap = 4;
 aio_angle = 20;
 aio_to_lens = 10;
 aio_board_depth = 10;
@@ -34,12 +34,14 @@ MOTOR_MOUNT_MARGIN=2;
 // Diameter of the center hole in the frame
 MOTOR_MOUNT_CENTER_DIAMETER=5;
 
-// Margin for the outside standoffs
-STANDOFF_MARGIN=3;
 
 /* [Hidden] */
 M3 = 3.4; 
 M2 = 2.4;
+
+// Margin for the outside standoffs
+STANDOFF_MARGIN=3;
+STANDOFF_HOLE_RADIUS=M3/2;
 
 prop_size = PROP_SIZE_INCHES * 25.4; 
 
@@ -93,6 +95,12 @@ guard_or = guard_ir + GUARD_WIDTH;
 arm_length = (
   wheelbase / 2 +
   guard_ir
+);
+
+
+standoff_offset = (
+    arm_length + 
+    STANDOFF_MARGIN 
 );
 
 echo("Wheelbase: ");
@@ -150,21 +158,13 @@ module stackHoles() {
 }
 
 module standoffHole() {
-  offset = (
-    arm_length + 
-    STANDOFF_MARGIN 
-  );
-  translate([offset, 0, -FRAME_THICKNESS]) {
-    cylinder(r=1.5, h=FRAME_THICKNESS*2);
+  translate([standoff_offset, 0, -FRAME_THICKNESS]) {
+    cylinder(r=STANDOFF_HOLE_RADIUS, h=FRAME_THICKNESS*2);
   }
 }
 module standoffTab() {
-  offset = (
-    arm_length +
-    STANDOFF_MARGIN
-  );
-  translate([0,0,]) {
-    translate([offset, 0, -FRAME_THICKNESS/2]) {
+  translate([0,0,0]) {
+    translate([standoff_offset, 0, -FRAME_THICKNESS/2]) {
       cylinder(r=STANDOFF_MARGIN, h=FRAME_THICKNESS);
     }
   }
@@ -198,74 +198,81 @@ module frame() {
   }
 }
 module aio_camera() {
-  thickness = FRAME_THICKNESS/2;
+  thickness = FRAME_THICKNESS;
   
   plate_size = [
     stack_board_size,stack_board_size, thickness
   ];
   
-  holder_z = aio_to_lens+aio_lens_diameter+aio_lens_margin;
+  holder_z = aio_to_lens + aio_lens_diameter/2;
   holder_offset = tan(aio_angle) * (holder_z / 2);
   holder_size = [
         aio_lens_diameter+aio_lens_margin*2, 
         thickness,
         holder_z
   ];
-
-  overhang_size = [
-    holder_size[0],
-    aio_board_depth,
-    thickness,
+  brace_size = [
+    (arm_length+STANDOFF_MARGIN) / sin(45),
+    FRAME_THICKNESS,
+    FRAME_THICKNESS
   ];
-  
-  rotate([0,0,0]) {
+  brace_translation = [0,0,holder_size[2]/2-0.5];
+  rotation = [0,0,45];
+  translation = [
+    brace_size[0]/2 * sin(45),
+    brace_size[0]/2 * sin(45) * -1,
+    holder_size[2]/2
+  ];
+  tab_reset = [
+    -arm_length-STANDOFF_MARGIN,
+    0,
+    brace_translation[2]
+  ];
+  tab_offset = brace_size[0]/2;
+  // standoff mount 
+
+  translate(translation)
+  rotate(rotation) {
+    
+    // brace
     difference() {
-      union() {
-        // plate
-        translate([0,0,holder_size[2]/2-thickness/2]) {
-          cube(plate_size, center=true);
-        }
-        // overhang
-        translate([0,-(overhang_size[1]+stack_board_size)/2,holder_size[2]/2-thickness/2]) {
-          cube(overhang_size, center=true);
-        }
-        // holder
-        translate([0,-(holder_offset+stack_board_size+thickness+overhang_size[1]*2)/2,0]) {
-          rotate([-aio_angle,0,0]) {
-            difference() {
-            cube(holder_size, center=true);
-            translate([0,thickness*2,0]) {
-              rotate([90,0,0])
-                cylinder(r=aio_lens_diameter/2, h=thickness*4);
-              }
-              translate([0,0,-holder_size[2]/4]) {
-                cube([aio_lens_gap,thickness*4,holder_size[2]/2], center=true);
-              }
-            }
-          }
-        } 
+      hull() {
+        translate(tab_reset  + [tab_offset,0,0])
+          standoffTab();
+        translate(tab_reset  - [tab_offset,0,0])
+          standoffTab();
+        translate(brace_translation) // TODO calculator the 0.5
+          cube(brace_size, center=true);
       }
-      // holes
-      translate([-stack_hole_spacing/2,-stack_hole_spacing/2,holder_size[2]/2-thickness*2]) {
-          cylinder(r=stack_hole_diameter/2, h=FRAME_THICKNESS*2);
-          translate([stack_hole_spacing,0,0]) {
-            cylinder(r=stack_hole_diameter/2, h=FRAME_THICKNESS*2);
-          }
-          translate([0, stack_hole_spacing,0]) {
-            cylinder(r=stack_hole_diameter/2, h=FRAME_THICKNESS*2);
-          }
-          translate([stack_hole_spacing, stack_hole_spacing,0]) {
-            cylinder(r=stack_hole_diameter/2, h=FRAME_THICKNESS*2);
-          }
-        }  
-      }
+      translate(tab_reset  + [tab_offset,0,0])
+        standoffHole();
+      translate(tab_reset  - [tab_offset,0,0])
+        standoffHole();    
     }
+    // holder
+    translate([0,-holder_offset,0]) {
+      rotate([-aio_angle,0,0]) {
+        difference() {
+          cube(holder_size, center=true);
+          translate([0,thickness*2,holder_size[2]/2-aio_to_lens]) {
+            rotate([90,0,0])
+              cylinder(r=aio_lens_diameter/2, h=thickness*4);
+          }
+          translate([0,0,-aio_to_lens]) {
+            cube([aio_lens_gap,thickness*4,holder_size[2]], center=true);
+          }
+        }
+      }
+    } 
+
+
+  }
 }
 
 if (part == "frame" || part == "all") {
  frame();
 }
-if (part == "aio_camera" || part == "all") {
+if (part == "aio" || part == "all") {
   aio_camera();
 }
 $fn=64;
