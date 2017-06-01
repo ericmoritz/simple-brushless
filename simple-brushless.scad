@@ -24,6 +24,7 @@ aio_lens_margin = 3;
 aio_lens_gap = 4;
 aio_angle = 20;
 aio_to_lens = 10;
+aio_bottom = -2;
 aio_board_depth = 10;
 
 /* [Advanced Options] */
@@ -204,7 +205,7 @@ module aio_camera() {
     stack_board_size,stack_board_size, thickness
   ];
   
-  holder_z = aio_to_lens + aio_lens_diameter/2;
+  holder_z = aio_to_lens + aio_lens_diameter/2 + aio_bottom;
   holder_offset = tan(aio_angle) * (holder_z / 2);
   holder_size = [
         aio_lens_diameter+aio_lens_margin*2, 
